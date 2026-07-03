@@ -1,0 +1,19 @@
+{
+  "name": "doqmentary",
+  "version": "0.1.0",
+  "description": "Deterministic CLI for doqmentary solution outlines — the hands. Performs file mechanics only; never calls a model.",
+  "type": "module",
+  "bin": {
+    "doqmentary": "bin/doqmentary.mjs"
+  },
+  "scripts": {
+    "start": "node bin/doqmentary.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

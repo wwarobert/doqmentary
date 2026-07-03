@@ -1,0 +1,33 @@
+# doqmentary plugin manifest (Awesome GitHub Copilot collection format)
+#
+# Bundles the doqmentary Copilot primitives — the author skill, the review-board
+# agents, and the enterprise-context instructions — so they can be installed and
+# discovered as a single unit.
+
+id: doqmentary
+name: doqmentary
+description: >-
+  Config-driven solution outlines as reviewable markdown. Bundles the outline
+  author skill, the 3-persona review board, and enterprise-context injection.
+version: 1
+tags:
+  - documentation
+  - solution-architecture
+  - review-board
+  - enterprise-context
+
+items:
+  - path: .github/skills/author-solution-outline/SKILL.md
+    kind: skill
+  - path: .github/agents/review-enterprise-architect.agent.md
+    kind: agent
+  - path: .github/agents/review-solution-architect.agent.md
+    kind: agent
+  - path: .github/agents/review-manager-readability.agent.md
+    kind: agent
+  - path: .github/instructions/enterprise-context.instructions.md
+    kind: instruction
+
+display:
+  ordering: manual
+  show_badge: true
