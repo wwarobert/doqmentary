@@ -1,0 +1,16 @@
+# --- Dependencies (regenerable from cli/package-lock.json via `npm ci`) -------
+cli/node_modules/
+node_modules/
+npm-debug.log*
+
+# --- Generated wiki output (regenerable via `doqmentary assemble`) ------------
+documents/**/wiki/
+
+# --- Company-specific enterprise content (keep index + examples) --------------
+# Real principles/decisions are private; only README.md and *.example.md ship.
+enterprise/principles/*
+!enterprise/principles/README.md
+!enterprise/principles/*.example.md
+enterprise/decisions/*
+!enterprise/decisions/README.md
+!enterprise/decisions/*.example.md

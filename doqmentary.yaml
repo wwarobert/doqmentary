@@ -1,0 +1,123 @@
+# doqmentary — global default configuration
+#
+# This is the global default config. Any document may override any of these
+# values with a per-document `doqmentary.yaml` placed in the document folder.
+# The effective config for a document is: global defaults merged with the
+# per-document overrides, where per-document values win (see cli/README.md).
+#
+# Schema reference:
+#   language        : ISO language code for authored + assembled content.
+#   output.target   : navigation target for assembly (v1: `markdown`).
+#   output.dir      : sub-folder (inside the document) for assembled wiki pages.
+#   sections[]      : ordered list of section definitions (see below).
+#   personas[]      : review board personas (see below).
+#
+# Section schema:
+#   id       : stable identifier (kebab-case, used for filenames + links).
+#   title    : human-readable heading.
+#   derived  : true if synthesized from other sections (not authored directly).
+#   layer    : context layer that fills the block:
+#                enterprise  -> fixed, drawn from an enterprise library
+#                situation   -> variable, interviewed from the user
+#                synthesis   -> derived from other sections
+#   source   : enterprise library the block draws from (`principles`|`decisions`).
+#   render   : optional renderer hint (e.g. `mermaid` for diagrams).
+#   blocks[] : for derived sections, the summary blocks and what each summarizes.
+#
+# Persona schema:
+#   id       : stable identifier (matches the *.agent.md file name).
+#   title    : display name.
+#   lens     : the single concern this persona reviews for.
+#   checks[] : repeatable checklist items the persona verifies.
+
+version: 1
+
+language: en
+
+output:
+  target: markdown
+  dir: wiki
+
+# --- Default 9-section solution-outline template -----------------------------
+sections:
+  - id: summary
+    title: Summary
+    derived: true
+    layer: synthesis
+    blocks:
+      - id: scope-background
+        title: Scope & background
+        summarizes: project-background
+      - id: project-architecture
+        title: Project architecture
+        summarizes: target-conceptual-design
+      - id: project-principles
+        title: Project principles
+        layer: enterprise
+        source: principles
+      - id: dependencies
+        title: Dependencies
+        summarizes: assumptions-dependencies
+
+  - id: project-background
+    title: Project background
+    layer: situation
+
+  - id: detailed-scope
+    title: Detailed scope
+    layer: situation
+
+  - id: out-of-scope
+    title: Out of scope
+    layer: situation
+
+  - id: target-conceptual-design
+    title: Target conceptual design
+    layer: situation
+    render: mermaid
+
+  - id: key-design-decisions
+    title: Key design decisions
+    layer: enterprise
+    source: decisions
+
+  - id: assumptions-dependencies
+    title: Assumptions & dependencies
+    layer: situation
+
+  - id: risks-mitigations
+    title: Risk & mitigations
+    layer: situation
+
+  - id: next-steps
+    title: Next steps
+    layer: situation
+
+# --- Default 3-persona review board ------------------------------------------
+personas:
+  - id: review-enterprise-architect
+    title: Enterprise Architect
+    lens: Alignment with enterprise principles and prior decisions.
+    checks:
+      - Every referenced principle exists in the principles library and is relevant.
+      - Every referenced decision exists in the decisions library and is honored.
+      - Selection is complete — no applicable principle or decision was omitted.
+      - Each selected item states how it applies to this solution.
+
+  - id: review-solution-architect
+    title: Solution Architect
+    lens: Technical soundness and pattern fitness.
+    checks:
+      - The target conceptual design is coherent and implementable.
+      - Design decisions are justified and trade-offs are stated.
+      - Risks have concrete, proportionate mitigations.
+      - Assumptions and dependencies are explicit and testable.
+
+  - id: review-manager-readability
+    title: Manager (non-technical readability)
+    lens: Readability for a non-technical reader.
+    checks:
+      - The Summary is understandable without reading the body.
+      - Jargon is defined or avoided.
+      - Next steps list clear owners and outcomes.
+      - Scope and out-of-scope are unambiguous.

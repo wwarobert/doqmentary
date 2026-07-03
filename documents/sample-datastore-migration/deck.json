@@ -1,0 +1,7 @@
+{
+  "project-background": "The order-management system stores state in a self-hosted relational database that the team patches and scales by hand. Incidents from manual failover and a looming end-of-life for the current database version are driving a migration.",
+  "detailed-scope": "Migrate the order-management datastore to the managed database platform, including schema, data, and application connection strings. Establish automated backups and region-appropriate replication.",
+  "out-of-scope": "Reworking the order-management application logic, changing the public API, and migrating analytics/reporting stores are out of scope for this effort.",
+  "assumptions-dependencies": "Assumes the managed platform is available in the required region and that the central identity provider supports the application's workload identity. Depends on the identity provider's availability (per ADR-002).",
+  "risks-mitigations": "- **Data loss during cutover.** Mitigation: a dual-write validation window and a tested rollback path.\n- **Extended downtime.** Mitigation: a rehearsed migration in a maintenance window with a go/no-go checkpoint."
+}
