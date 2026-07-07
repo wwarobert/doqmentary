@@ -6,6 +6,9 @@ npm-debug.log*
 # --- Generated wiki output (regenerable via `doqmentary assemble`) ------------
 documents/**/wiki/
 
+# --- Editor / IDE settings (personal, machine-specific) ----------------------
+.vscode/
+
 # --- Company-specific enterprise content (keep index + examples) --------------
 # Real principles/decisions are private; only README.md and *.example.md ship.
 enterprise/principles/*
