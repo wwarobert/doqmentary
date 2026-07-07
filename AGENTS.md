@@ -38,7 +38,7 @@ Full command reference: [cli/README.md](cli/README.md).
 | `documents/<solution>/wiki/` | Assembled wiki output (written by `assemble`) |
 | `enterprise/principles/` | Addressable enterprise principles (`PRIN-001`, …) |
 | `enterprise/decisions/` | Addressable ADRs (`ADR-001`, …) |
-| `.github/skills/` | Copilot author skill + openspec workflow skills |
+| `.github/skills/` | Copilot author skill + doqmentary change-workflow skills |
 | `.github/agents/` | Review-board persona agents |
 | `.github/instructions/` | Enterprise-context injection (auto-applied to `documents/**/*.md`) |
 | `openspec/` | Change management: proposals, designs, task lists, specs |
@@ -82,12 +82,12 @@ Run each configured agent against the document; revise and re-run the full board
 
 Read principles and decisions from their source files in `enterprise/` — never copy content into documents. Reference entries by stable id (`PRIN-001`, `ADR-001`). The [enterprise-context instructions](.github/instructions/enterprise-context.instructions.md) govern exactly how to select and apply entries.
 
-## openspec workflow
+## Change workflow
 
-Active changes live in `openspec/changes/<name>/`. The standard progression is:
+Active changes live in `openspec/changes/<name>/`. The standard flow is:
 
 ```
-openspec-propose → openspec-explore → openspec-apply-change → openspec-sync-specs → openspec-archive-change
+doqmentary-propose → doqmentary-explore → doqmentary-apply-change
 ```
 
-Completed changes are archived under `openspec/changes/archive/`. Main specs live in `openspec/specs/`.
+`doqmentary-apply-change` handles the full lifecycle: implements tasks, then on completion offers to sync delta specs and archive the change inline. Completed changes are archived under `openspec/changes/archive/`. Main specs live in `openspec/specs/`.
