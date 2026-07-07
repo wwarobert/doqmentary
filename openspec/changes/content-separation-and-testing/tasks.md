@@ -8,19 +8,19 @@
 
 ## 2. Automated tests
 
-- [ ] 2.1 Add a `cli/test/` folder and a `test` script using `node --test` (no new dependencies)
-- [ ] 2.2 Unit tests: `deepMerge`/`loadEffectiveConfig` (override wins, lists replace wholesale, omitted inherit), `parseFrontmatter`, `bodyIsEmpty`
-- [ ] 2.3 Unit tests: `checkLinks` (broken internal link reported; external/`../` skipped) and `buildNav` (markdown target)
-- [ ] 2.4 Integration tests: `new` and `ingest` against a temp `--root`, asserting created/ingested sections and unknown-section handling
-- [ ] 2.5 Integration tests: `assemble` (pages + home + nav, link integrity) and `validate` failure paths (missing/empty section → non-zero; broken link reported)
-- [ ] 2.6 End-to-end test: `new → ingest → assemble → validate` in a temp dir seeded from the committed example fixtures; assert files and exit codes
-- [ ] 2.7 Add a test asserting the gitignore boundary: a plain `enterprise/principles/PRIN-X.md` is ignored while `*.example.md` is tracked
+- [x] 2.1 Add a `cli/test/` folder and a `test` script using `node --test` (no new dependencies)
+- [x] 2.2 Unit tests: `deepMerge`/`loadEffectiveConfig` (override wins, lists replace wholesale, omitted inherit), `parseFrontmatter`, `bodyIsEmpty`
+- [x] 2.3 Unit tests: `checkLinks` (broken internal link reported; external/`../` skipped) and `buildNav` (markdown target)
+- [x] 2.4 Integration tests: `new` and `ingest` against a temp `--root`, asserting created/ingested sections and unknown-section handling
+- [x] 2.5 Integration tests: `assemble` (pages + home + nav, link integrity) and `validate` failure paths (missing/empty section → non-zero; broken link reported)
+- [x] 2.6 End-to-end test: `new → ingest → assemble → validate` in a temp dir seeded from the committed example fixtures; assert files and exit codes
+- [x] 2.7 Add a test asserting the gitignore boundary: a plain `enterprise/principles/PRIN-X.md` is ignored while `*.example.md` is tracked
 
 ## 3. Continuous integration
 
-- [ ] 3.1 Add a GitHub Actions workflow (`.github/workflows/ci.yml`) triggered on push and pull_request
-- [ ] 3.2 Steps: checkout → setup Node → `npm ci` in `cli/` → `npm test`, pinned to the public npm registry (ignore any private `.npmrc`)
-- [ ] 3.3 Ensure a failing test fails the workflow (non-zero exit blocks merge)
+- [x] 3.1 Add a GitHub Actions workflow (`.github/workflows/ci.yml`) triggered on push and pull_request
+- [x] 3.2 Steps: checkout → setup Node → `npm ci` in `cli/` → `npm test`, pinned to the public npm registry (ignore any private `.npmrc`)
+- [x] 3.3 Ensure a failing test fails the workflow (non-zero exit blocks merge)
 
 ## 4. Validation
 
