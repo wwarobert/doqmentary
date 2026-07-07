@@ -1,20 +1,19 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tech stack: Node.js >= 18, ESM JavaScript (.mjs), no TypeScript, no transpile step.
+  Only external dependency: js-yaml. Do not add new dependencies without discussion.
+  Tests: Node built-in runner (node:test + node:assert/strict), files in cli/test/*.test.mjs.
+  CLI is deterministic and never calls a model — all generation/judgment belongs in Copilot.
+  Config is layered YAML: global doqmentary.yaml deep-merged with per-document doqmentary.yaml;
+  sections/personas arrays replace wholesale (not appended) when present in the override.
+  Section ids are kebab-case and used directly as filenames and wiki slugs.
+  Domain: solution-outline authoring, enterprise-context injection, persona-based review board.
+  Key paths: cli/src/ (CLI source), documents/ (solution outlines), enterprise/ (libraries),
+  .github/skills/ (Copilot skills), .github/agents/ (review board), openspec/specs/ (main specs).
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  tasks:
+    - Break tasks into independently completable units (one file or one command per task where possible)
+    - Mark tasks with [ ] / [x] checkboxes
+    - Number tasks hierarchically (1.1, 1.2, …) so individual tasks can be referenced
