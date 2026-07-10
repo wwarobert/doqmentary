@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deepMerge, loadEffectiveConfig } from '../src/config.mjs';
+import { deepMerge, loadEffectiveConfig, UnknownTypeError, InvalidTypeNameError } from '../src/config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -121,6 +121,156 @@ test('loadEffectiveConfig – omitted per-doc value inherits from global', () =>
     const cfg = loadEffectiveConfig(root, 'my-doc');
     assert.strictEqual(cfg.version, 1);       // inherited
     assert.strictEqual(cfg.language, 'de');   // overridden
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+// ── type intermediate layer ───────────────────────────────────────────────────
+
+const TYPE_YAML = `title: My Type
+sections:
+  - id: context
+    title: Context
+    layer: situation
+  - id: decision
+    title: Decision
+    layer: situation
+`;
+
+test('loadEffectiveConfig – type layer supplies sections when doc declares type', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'my-type.yaml'), TYPE_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: my-type\n');
+    const cfg = loadEffectiveConfig(root, 'my-doc');
+    assert.strictEqual(cfg.sections.length, 2);
+    assert.strictEqual(cfg.sections[0].id, 'context');
+    assert.strictEqual(cfg.sections[1].id, 'decision');
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('loadEffectiveConfig – per-doc sections override type sections (wholesale)', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'my-type.yaml'), TYPE_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(docDir, 'doqmentary.yaml'),
+      'type: my-type\nsections:\n  - id: override\n    title: Override\n',
+    );
+    const cfg = loadEffectiveConfig(root, 'my-doc');
+    assert.strictEqual(cfg.sections.length, 1);
+    assert.strictEqual(cfg.sections[0].id, 'override');
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('loadEffectiveConfig – global scalar inherited through type layer when doc omits it', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'my-type.yaml'), TYPE_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: my-type\n');
+    const cfg = loadEffectiveConfig(root, 'my-doc');
+    assert.strictEqual(cfg.language, 'en');  // from global
+    assert.strictEqual(cfg.version, 1);      // from global
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('loadEffectiveConfig – missing type file throws UnknownTypeError', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: nonexistent\n');
+    assert.throws(
+      () => loadEffectiveConfig(root, 'my-doc'),
+      (err) => err instanceof UnknownTypeError && err.typeName === 'nonexistent',
+    );
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+// ── InvalidTypeNameError (path-traversal guard) ───────────────────────────────
+
+test('loadEffectiveConfig – traversal string ../../secret throws InvalidTypeNameError', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: ../../secret\n');
+    assert.throws(
+      () => loadEffectiveConfig(root, 'my-doc'),
+      (err) => err instanceof InvalidTypeNameError && err.typeName === '../../secret',
+    );
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('loadEffectiveConfig – backslash traversal ..\\\\secret throws InvalidTypeNameError', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: ..\\\\secret\n');
+    assert.throws(
+      () => loadEffectiveConfig(root, 'my-doc'),
+      (err) => err instanceof InvalidTypeNameError,
+    );
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('loadEffectiveConfig – valid kebab-case type name does not throw InvalidTypeNameError', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'my-type.yaml'), TYPE_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: my-type\n');
+    // Should not throw InvalidTypeNameError — may throw nothing or UnknownTypeError only.
+    assert.doesNotThrow(
+      () => loadEffectiveConfig(root, 'my-doc'),
+    );
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('loadEffectiveConfig – no type field uses two-layer merge unchanged', () => {
+  const root = makeTempDir();
+  try {
+    fs.writeFileSync(path.join(root, 'doqmentary.yaml'), GLOBAL_YAML);
+    const docDir = path.join(root, 'documents', 'my-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'language: nl\n');
+    const cfg = loadEffectiveConfig(root, 'my-doc');
+    assert.strictEqual(cfg.language, 'nl');
+    assert.strictEqual(cfg.sections.length, 2); // from global
   } finally {
     cleanupDir(root);
   }

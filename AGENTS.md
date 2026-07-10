@@ -67,7 +67,7 @@ Full command reference: [cli/README.md](cli/README.md).
 
 | Primitive | File | Purpose |
 |---|---|---|
-| Author skill | `.github/skills/author-solution-outline/SKILL.md` | Iterates sections, auto-fills enterprise blocks, interviews for situation blocks, synthesizes Summary |
+| Author skill | `.github/skills/author-document/SKILL.md` | Iterates sections, auto-fills enterprise blocks, interviews for situation blocks, synthesizes derived sections; type-aware |
 | Enterprise-context instructions | `.github/instructions/enterprise-context.instructions.md` | Auto-injected for `documents/**/*.md`; governs library selection rules |
 | Review-board agents | `.github/agents/*.agent.md` | 3-persona quality gate (Enterprise Architect, Solution Architect, Manager) |
 | Collection manifest | `.github/doqmentary.collection.yml` | Bundles all primitives for single-step install |

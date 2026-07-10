@@ -42,3 +42,13 @@ test('enterprise/decisions/ADR-001.example.md is not git-ignored', () => {
   const result = gitCheckIgnore('enterprise/decisions/ADR-001.example.md');
   assert.strictEqual(result.status, 1, 'Expected ADR-001.example.md to be tracked (not ignored)');
 });
+
+test('document-types/my-type.yaml is git-ignored', () => {
+  const result = gitCheckIgnore('document-types/my-type.yaml');
+  assert.strictEqual(result.status, 0, 'Expected my-type.yaml to be ignored by .gitignore');
+});
+
+test('document-types/solution-outline.example.yaml is not git-ignored', () => {
+  const result = gitCheckIgnore('document-types/solution-outline.example.yaml');
+  assert.strictEqual(result.status, 1, 'Expected solution-outline.example.yaml to be tracked (not ignored)');
+});

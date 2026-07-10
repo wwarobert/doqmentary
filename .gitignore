@@ -17,3 +17,9 @@ enterprise/principles/*
 enterprise/decisions/*
 !enterprise/decisions/README.md
 !enterprise/decisions/*.example.md
+
+# --- Company-specific document types (keep index + examples) ------------------
+# Real type definitions reveal org taxonomy; only README.md and *.example.yaml ship.
+document-types/*.yaml
+!document-types/*.example.yaml
+!document-types/README.md

@@ -1,0 +1,83 @@
+title: Solution Outline
+
+sections:
+  - id: summary
+    title: Summary
+    derived: true
+    layer: synthesis
+    blocks:
+      - id: scope-background
+        title: Scope & background
+        summarizes: project-background
+      - id: project-architecture
+        title: Project architecture
+        summarizes: target-conceptual-design
+      - id: project-principles
+        title: Project principles
+        layer: enterprise
+        source: principles
+      - id: dependencies
+        title: Dependencies
+        summarizes: assumptions-dependencies
+
+  - id: project-background
+    title: Project background
+    layer: situation
+
+  - id: detailed-scope
+    title: Detailed scope
+    layer: situation
+
+  - id: out-of-scope
+    title: Out of scope
+    layer: situation
+
+  - id: target-conceptual-design
+    title: Target conceptual design
+    layer: situation
+    render: mermaid
+
+  - id: key-design-decisions
+    title: Key design decisions
+    layer: enterprise
+    source: decisions
+
+  - id: assumptions-dependencies
+    title: Assumptions & dependencies
+    layer: situation
+
+  - id: risks-mitigations
+    title: Risk & mitigations
+    layer: situation
+
+  - id: next-steps
+    title: Next steps
+    layer: situation
+
+personas:
+  - id: review-enterprise-architect
+    title: Enterprise Architect
+    lens: Alignment with enterprise principles and prior decisions.
+    checks:
+      - Every referenced principle exists in the principles library and is relevant.
+      - Every referenced decision exists in the decisions library and is honored.
+      - Selection is complete — no applicable principle or decision was omitted.
+      - Each selected item states how it applies to this solution.
+
+  - id: review-solution-architect
+    title: Solution Architect
+    lens: Technical soundness and pattern fitness.
+    checks:
+      - The target conceptual design is coherent and implementable.
+      - Design decisions are justified and trade-offs are stated.
+      - Risks have concrete, proportionate mitigations.
+      - Assumptions and dependencies are explicit and testable.
+
+  - id: review-manager-readability
+    title: Manager (non-technical readability)
+    lens: Readability for a non-technical reader.
+    checks:
+      - The Summary is understandable without reading the body.
+      - Jargon is defined or avoided.
+      - Next steps list clear owners and outcomes.
+      - Scope and out-of-scope are unambiguous.

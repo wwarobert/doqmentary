@@ -7,6 +7,7 @@ import { cmdNew } from '../src/commands/new.mjs';
 import { cmdIngest } from '../src/commands/ingest.mjs';
 import { cmdAssemble } from '../src/commands/assemble.mjs';
 import { cmdValidate } from '../src/commands/validate.mjs';
+import { cmdList } from '../src/commands/list.mjs';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,113 @@ test('cmdNew – returns error when no solution is provided', () => {
     const result = cmdNew({ _: [], root });
     assert.strictEqual(result.ok, false);
     assert.ok(result.error);
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+const TYPE_YAML = `title: Test Type
+sections:
+  - id: context
+    title: Context
+    layer: situation
+  - id: decision
+    title: Decision
+    layer: situation
+`;
+
+test('cmdNew --type – scaffolds sections from type config and writes type to doc config', () => {
+  const root = makeTempRoot();
+  try {
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'test-type.yaml'), TYPE_YAML);
+    const result = cmdNew(args(root, 'typed-doc', { type: 'test-type' }));
+    assert.strictEqual(result.ok, true);
+    assert.deepEqual(result.created, ['context', 'decision']);
+    assert.strictEqual(result.type, 'test-type');
+    // per-doc doqmentary.yaml should declare the type
+    const docConfig = path.join(root, 'documents', 'typed-doc', 'doqmentary.yaml');
+    assert.ok(fs.existsSync(docConfig));
+    const content = fs.readFileSync(docConfig, 'utf8');
+    assert.ok(content.includes('test-type'));
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdNew --type – returns error when type file does not exist', () => {
+  const root = makeTempRoot();
+  try {
+    const result = cmdNew(args(root, 'typed-doc', { type: 'nonexistent' }));
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.error.includes('nonexistent'));
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdNew --type – on existing untyped config merges type and scaffolds missing sections', () => {
+  const root = makeTempRoot();
+  try {
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'test-type.yaml'), TYPE_YAML);
+    // Create the doc dir with a per-doc config that has no type.
+    const docDir = path.join(root, 'documents', 'typed-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'language: fr\n');
+    const result = cmdNew(args(root, 'typed-doc', { type: 'test-type' }));
+    assert.strictEqual(result.ok, true);
+    assert.deepEqual(result.created, ['context', 'decision']);
+    assert.strictEqual(result.type, 'test-type');
+    // Per-doc config should now have type merged in, with language preserved.
+    const docConfig = path.join(docDir, 'doqmentary.yaml');
+    const content = fs.readFileSync(docConfig, 'utf8');
+    assert.ok(content.includes('test-type'));
+    assert.ok(content.includes('fr'));
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdNew --type – on existing same-typed config skips config write, scaffolds missing sections', () => {
+  const root = makeTempRoot();
+  try {
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'test-type.yaml'), TYPE_YAML);
+    // First call: create from scratch.
+    cmdNew(args(root, 'typed-doc', { type: 'test-type' }));
+    // Remove one section to simulate a partial scaffold.
+    const contextFile = path.join(root, 'documents', 'typed-doc', 'sections', 'context.md');
+    fs.rmSync(contextFile);
+    // Second call: same type, should scaffold missing section only.
+    const result = cmdNew(args(root, 'typed-doc', { type: 'test-type' }));
+    assert.strictEqual(result.ok, true);
+    assert.deepEqual(result.created, ['context']);
+    assert.deepEqual(result.skipped, ['decision']);
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdNew --type – on existing different-typed config returns conflict error without scaffolding', () => {
+  const root = makeTempRoot();
+  try {
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'test-type.yaml'), TYPE_YAML);
+    fs.writeFileSync(path.join(root, 'document-types', 'other-type.yaml'), TYPE_YAML);
+    // Set up a doc with type: other-type.
+    const docDir = path.join(root, 'documents', 'typed-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: other-type\n');
+    const result = cmdNew(args(root, 'typed-doc', { type: 'test-type' }));
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.error.includes('conflict') || result.error.includes('Conflict'));
+    // Config should be unchanged.
+    const content = fs.readFileSync(path.join(docDir, 'doqmentary.yaml'), 'utf8');
+    assert.ok(content.includes('other-type'));
+    assert.ok(!content.includes('test-type'));
+    // No sections should have been scaffolded.
+    assert.ok(!fs.existsSync(path.join(docDir, 'sections')));
   } finally {
     cleanupDir(root);
   }
@@ -225,6 +333,118 @@ test('cmdValidate – fully populated document with clean wiki passes', () => {
     const result = cmdValidate(args(root, 'sol'));
     assert.strictEqual(result.ok, true);
     assert.strictEqual(result.issues.length, 0);
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdValidate – document with unknown type reports unknown-type issue', () => {
+  const root = makeTempRoot();
+  try {
+    const docDir = path.join(root, 'documents', 'typed-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: nonexistent\n');
+    const result = cmdValidate(args(root, 'typed-doc'));
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.issues.some((i) => i.type === 'unknown-type'));
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdValidate – document with traversal type reports invalid-type issue and exits non-zero', () => {
+  const root = makeTempRoot();
+  try {
+    const docDir = path.join(root, 'documents', 'traversal-doc');
+    fs.mkdirSync(docDir, { recursive: true });
+    fs.writeFileSync(path.join(docDir, 'doqmentary.yaml'), 'type: ../../etc\n');
+    const result = cmdValidate(args(root, 'traversal-doc'));
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.issues.some((i) => i.type === 'invalid-type'));
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+// ── cmdList ───────────────────────────────────────────────────────────────────
+
+const LIST_TYPE_YAML = `title: List Test Type
+sections:
+  - id: context
+    title: Context
+    layer: situation
+`;
+
+test('cmdList – returns all documents with their type and assembled status', () => {
+  const root = makeTempRoot();
+  try {
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'my-type.yaml'), LIST_TYPE_YAML);
+
+    // doc-a: typed, not assembled
+    cmdNew(args(root, 'doc-a', { type: 'my-type' }));
+    // doc-b: no type, assembled
+    cmdNew(args(root, 'doc-b'));
+    writeSectionFile(root, 'doc-b', 'background', 'Content.');
+    writeSectionFile(root, 'doc-b', 'scope', 'Content.');
+    cmdAssemble(args(root, 'doc-b'));
+
+    const result = cmdList(args(root, ''));
+    assert.strictEqual(result.ok, true);
+    const names = result.documents.map((d) => d.name);
+    assert.ok(names.includes('doc-a'));
+    assert.ok(names.includes('doc-b'));
+    const docA = result.documents.find((d) => d.name === 'doc-a');
+    const docB = result.documents.find((d) => d.name === 'doc-b');
+    assert.strictEqual(docA.type, 'my-type');
+    assert.strictEqual(docA.assembled, false);
+    assert.strictEqual(docB.assembled, true);
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdList --type – filters to only matching document type', () => {
+  const root = makeTempRoot();
+  try {
+    fs.mkdirSync(path.join(root, 'document-types'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'document-types', 'my-type.yaml'), LIST_TYPE_YAML);
+
+    cmdNew(args(root, 'doc-a', { type: 'my-type' }));
+    cmdNew(args(root, 'doc-b')); // no type
+
+    const result = cmdList(args(root, '', { type: 'my-type' }));
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.documents.length, 1);
+    assert.strictEqual(result.documents[0].name, 'doc-a');
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdList --json – result documents array has expected shape', () => {
+  const root = makeTempRoot();
+  try {
+    cmdNew(args(root, 'doc-a'));
+    const result = cmdList(args(root, '', { json: true }));
+    assert.strictEqual(result.ok, true);
+    assert.ok(Array.isArray(result.documents));
+    const doc = result.documents[0];
+    assert.ok('name' in doc);
+    assert.ok('type' in doc);
+    assert.ok('assembled' in doc);
+  } finally {
+    cleanupDir(root);
+  }
+});
+
+test('cmdList – returns ok with empty documents when documents/ is empty', () => {
+  const root = makeTempRoot();
+  try {
+    fs.mkdirSync(path.join(root, 'documents'), { recursive: true });
+    const result = cmdList(args(root, ''));
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.documents.length, 0);
   } finally {
     cleanupDir(root);
   }
