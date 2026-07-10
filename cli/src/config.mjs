@@ -1,6 +1,23 @@
 import path from 'node:path';
 import { readYaml, exists } from './fsutil.mjs';
 
+/** Thrown when a document declares a `type` that has no matching type file. */
+export class UnknownTypeError extends Error {
+  constructor(typeName, typePath) {
+    super(`Unknown document type "${typeName}": no file found at ${typePath}`);
+    this.typeName = typeName;
+    this.typePath = typePath;
+  }
+}
+
+/** Thrown when a document declares a `type` containing path-traversal characters. */
+export class InvalidTypeNameError extends Error {
+  constructor(typeName) {
+    super(`Invalid document type name "${typeName}": type names must not contain path components (/, \\, or ..)`);
+    this.typeName = typeName;
+  }
+}
+
 export function isPlainObject(v) {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
@@ -26,16 +43,31 @@ export function deepMerge(base, override) {
 
 /**
  * Resolve the effective configuration for a document:
- * global `<root>/doqmentary.yaml` deep-merged with the per-document
- * `<root>/documents/<solution>/doqmentary.yaml` (document values win).
+ * global `<root>/doqmentary.yaml`
+ *   → `<root>/document-types/<type>.yaml`  (when the document declares `type`)
+ *   → `<root>/documents/<solution>/doqmentary.yaml`  (document values always win)
+ *
+ * Throws `UnknownTypeError` when the document declares a `type` that has no
+ * matching file in `document-types/`.
  */
 export function loadEffectiveConfig(root, solution) {
   const globalPath = path.join(root, 'doqmentary.yaml');
   const global = exists(globalPath) ? readYaml(globalPath) : {};
   if (!solution) return global;
   const docPath = path.join(root, 'documents', solution, 'doqmentary.yaml');
-  if (!exists(docPath)) return global;
-  return deepMerge(global, readYaml(docPath));
+  const docOverride = exists(docPath) ? readYaml(docPath) : {};
+
+  // Type intermediate layer: load document-types/<type>.yaml when declared.
+  const typeName = docOverride.type;
+  let typeLayer = {};
+  if (typeName) {
+    if (/[/\\]|\.\./.test(typeName)) throw new InvalidTypeNameError(typeName);
+    const typePath = path.join(root, 'document-types', `${typeName}.yaml`);
+    if (!exists(typePath)) throw new UnknownTypeError(typeName, typePath);
+    typeLayer = readYaml(typePath);
+  }
+
+  return deepMerge(deepMerge(global, typeLayer), docOverride);
 }
 
 export const sectionsOf = (c) => (Array.isArray(c?.sections) ? c.sections : []);

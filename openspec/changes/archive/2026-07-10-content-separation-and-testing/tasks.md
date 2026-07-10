@@ -24,6 +24,6 @@
 
 ## 4. Validation
 
-- [ ] 4.1 Run the full test suite locally (`npm test` in `cli/`) and confirm all tests pass on a clean checkout
-- [ ] 4.2 Confirm `git status` shows no `node_modules/`, no `wiki/`, and no non-example enterprise entries staged
-- [ ] 4.3 Run `openspec validate --change content-separation-and-testing --type change --strict` and resolve any issues
+- [x] 4.1 Run the full test suite locally (`npm test` in `cli/`) and confirm all tests pass on a clean checkout
+- [x] 4.2 Confirm `git status` shows no `node_modules/`, no `wiki/`, and no non-example enterprise entries staged
+- [x] 4.3 Run `openspec validate --change content-separation-and-testing --type change --strict` and resolve any issues

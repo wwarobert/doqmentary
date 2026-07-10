@@ -3,12 +3,14 @@ import { cmdNew } from '../src/commands/new.mjs';
 import { cmdIngest } from '../src/commands/ingest.mjs';
 import { cmdAssemble } from '../src/commands/assemble.mjs';
 import { cmdValidate } from '../src/commands/validate.mjs';
+import { cmdList } from '../src/commands/list.mjs';
 
 const COMMANDS = {
   new: cmdNew,
   ingest: cmdIngest,
   assemble: cmdAssemble,
   validate: cmdValidate,
+  list: cmdList,
 };
 
 function parseArgs(rest) {
@@ -28,10 +30,11 @@ function parseArgs(rest) {
 
 function usage() {
   return [
-    'doqmentary — deterministic CLI for solution-outline documents (no model calls).',
+    'doqmentary — deterministic CLI for architectural documents (no model calls).',
     '',
     'Usage:',
-    '  doqmentary new <solution>      [--root <dir>] [--json]',
+    '  doqmentary new <solution>      [--type <name>] [--root <dir>] [--json]',
+    '  doqmentary list                [--type <name>] [--root <dir>] [--json]',
     '  doqmentary ingest <solution>   (--map <file.json> | --section <id> --text "<text>") [--root <dir>] [--json]',
     '  doqmentary assemble <solution> [--root <dir>] [--json]',
     '  doqmentary validate <solution> [--root <dir>] [--json]',
@@ -45,10 +48,27 @@ function printHuman(command, result) {
   }
   switch (command) {
     case 'new':
-      console.log(`Scaffolded document "${result.solution}".`);
+      console.log(`Scaffolded document "${result.solution}"${result.type ? ` (type: ${result.type})` : ''}.`);
       console.log(`  created: ${result.created.join(', ') || '(none)'}`);
       if (result.skipped.length) console.log(`  skipped (already exist): ${result.skipped.join(', ')}`);
       break;
+    case 'list': {
+      const docs = result.documents ?? [];
+      if (docs.length === 0) {
+        console.log(result.message ?? 'No documents found.');
+      } else {
+        const nameW = Math.max(4, ...docs.map((d) => d.name.length));
+        const typeW = Math.max(4, ...docs.map((d) => (d.type ?? '—').length));
+        console.log(`${'NAME'.padEnd(nameW)}  ${'TYPE'.padEnd(typeW)}  STATUS`);
+        console.log(`${'─'.repeat(nameW)}  ${'─'.repeat(typeW)}  ──────────`);
+        for (const d of docs) {
+          const t = d.type ?? '—';
+          const s = d.assembled ? 'assembled' : 'draft';
+          console.log(`${d.name.padEnd(nameW)}  ${t.padEnd(typeW)}  ${s}`);
+        }
+      }
+      break;
+    }
     case 'ingest':
       console.log(`Ingested into "${result.solution}".`);
       console.log(`  written: ${result.written.join(', ') || '(none)'}`);
@@ -69,6 +89,7 @@ function printHuman(command, result) {
         console.error(`Document "${result.solution}" has ${result.issues.length} issue(s):`);
         for (const it of result.issues) {
           if (it.type === 'broken-link') console.error(`  broken-link: ${it.page} -> ${it.link}`);
+          else if (it.type === 'unknown-type') console.error(`  unknown-type: "${it.typeName}" — no matching file in document-types/`);
           else console.error(`  ${it.type}: ${it.section}`);
         }
       }

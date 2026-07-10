@@ -1,5 +1,5 @@
 ---
-description: Injects the applicable enterprise principles and decisions when authoring or reviewing doqmentary solution outlines.
+description: Injects the applicable enterprise principles and decisions when authoring or reviewing any doqmentary document under documents/ (solution outlines, ADRs, runbooks, or any other configured document type).
 applyTo: "documents/**/*.md"
 ---
 

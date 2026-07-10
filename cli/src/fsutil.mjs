@@ -23,6 +23,11 @@ export function writeFile(p, content) {
   fs.writeFileSync(p, content);
 }
 
+export function writeYaml(p, data) {
+  ensureDir(path.dirname(p));
+  fs.writeFileSync(p, yaml.dump(data));
+}
+
 export function listMarkdown(dir) {
   if (!exists(dir)) return [];
   return fs.readdirSync(dir).filter((f) => f.endsWith('.md'));
