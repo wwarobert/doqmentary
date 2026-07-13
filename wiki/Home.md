@@ -1,5 +1,3 @@
-# doqmentary
-
 Config-driven solution outlines as reviewable markdown — the document is the deliverable.
 
 Solution architects re-author the stable ~80% of every solution outline by hand, repeatedly
