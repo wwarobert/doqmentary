@@ -1,5 +1,3 @@
-## doqmentary
-
 **[Home](Home)**
 
 ---
